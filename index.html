@@ -3822,6 +3822,10 @@ function financeRows(){
      if(!isDonation)return;
      // كل تبرع مسجل يظهر للإدارة المالية مباشرة.
      if(String(h.status||'')!=='confirmed')return;
+     // استبعاد حركات التواصل (مشروع "تواصل") والحركات بدون قيمة تبرع محددة: دي مش حركات تبرع فعلية.
+     if(normName(h.project||'')==='تواصل')return;
+     const amountNum=Number(String(h.amount??'').replace(/,/g,''));
+     if(!h.amount || isNaN(amountNum) || amountNum<=0)return;
      const status=normalizeFinanceStatus(h.financeStatus);
      rows.push({donorId:d.id||'',donorName:d.name||'—',...h,financeStatus:status});
    });
@@ -3841,7 +3845,14 @@ function financeRows(){
 function refreshFinanceBadge(){
  const el=document.getElementById('financePendingCount'); if(!el)return;
  const donorList=Array.isArray(donors)?donors:[];
- const n=donorList.reduce((s,d)=>s+(Array.isArray(d&&d.history)?d.history:[]).filter(h=>h&&h.type==='donation'&&h.status==='confirmed'&&(!h.financeStatus||h.financeStatus==='pending')).length,0);
+ const n=donorList.reduce((s,d)=>s+(Array.isArray(d&&d.history)?d.history:[]).filter(h=>{
+   if(!h||h.type!=='donation'||h.status!=='confirmed')return false;
+   if(h.financeStatus&&h.financeStatus!=='pending')return false;
+   if(normName(h.project||'')==='تواصل')return false;
+   const amountNum=Number(String(h.amount??'').replace(/,/g,''));
+   if(!h.amount||isNaN(amountNum)||amountNum<=0)return false;
+   return true;
+ }).length,0);
  el.textContent=n;
 }
 function bindFinanceChannelTabs(){
