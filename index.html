@@ -1792,11 +1792,18 @@ async function syncPull(options){
     if(!data||data.error)throw new Error(data&&data.error||'فشل الاتصال');
 
     // حماية مهمة: لا تسمح لنسخة Google Sheets الفارغة بمسح بيانات الجهاز.
-    if(options.preserveLocalIfRemoteEmpty && !hasRemoteData(data) && hasLocalData()){
-      const pushed=await syncPushNow();
-      if(!pushed) throw new Error('بيانات Google Sheets فارغة ولم نتمكن من رفع النسخة الموجودة على الجهاز.');
-      setConnStatus('on');
-      return true;
+    // هذه الحماية مفعّلة دائمًا افتراضيًا، إلا إذا طلب المستخدم صراحةً استبدال بيانات
+    // الجهاز ببيانات الشيت عبر options.forceOverwriteLocal (زر "استيراد بيانات الشيت إلى النظام").
+    if(!hasRemoteData(data) && hasLocalData() && !options.forceOverwriteLocal){
+      if(options.preserveLocalIfRemoteEmpty){
+        const pushed=await syncPushNow();
+        if(!pushed) throw new Error('بيانات Google Sheets فارغة ولم نتمكن من رفع النسخة الموجودة على الجهاز.');
+        setConnStatus('on');
+        return true;
+      }
+      // لا يوجد طلب صريح باستبدال بيانات الجهاز: نتوقف فورًا بدون لمس بيانات الجهاز لحمايتها.
+      setConnStatus('off');
+      return false;
     }
 
     USERS=Array.isArray(data.users)?data.users:USERS;
@@ -1840,7 +1847,7 @@ function saveGasUrl(){
 async function testConnection(){
   if(!isSuperAdmin(currentUser))return;
   if(!GAS_URL){alert('يرجى إدخال رابط تطبيق جوجل شيت أولًا.');return}
-  const ok=await syncPull();
+  const ok=await syncPull({preserveLocalIfRemoteEmpty:true});
   alert(ok?'تم الاتصال بنجاح، وتمت مزامنة البيانات.':'تعذر الاتصال. تأكد من صحة الرابط، ومن نشر تطبيق الويب بصلاحية "Anyone".');
   if(ok){setView(currentView)}
 }
@@ -1848,7 +1855,7 @@ async function manualSync(){
  if(!canModule('syncData','edit',currentUser))return;
   if(!GAS_URL){alert('يرجى ربط جوجل شيت أولًا من هذه الصفحة.');return}
   const ok1=await syncPushNow();
-  const ok2=await syncPull();
+  const ok2=await syncPull({preserveLocalIfRemoteEmpty:true});
   alert(ok1&&ok2?'تمت المزامنة بنجاح.':'حدثت مشكلة أثناء المزامنة، حاول مرة أخرى.');
   setView(currentView);
 }
@@ -4107,7 +4114,7 @@ function saveSyncGasUrl(){
 async function testSyncConnection(){
   if(!canModule('syncData','edit',currentUser))return;
   if(!GAS_URL){alert('يرجى إدخال رابط Google Sheets أولًا.');return}
-  updateSyncViewBadge('connecting');const ok=await syncPull();updateSyncViewBadge(ok?'on':'off');
+  updateSyncViewBadge('connecting');const ok=await syncPull({preserveLocalIfRemoteEmpty:true});updateSyncViewBadge(ok?'on':'off');
   alert(ok?'تم الاتصال بنجاح، وتمت مزامنة البيانات.':'تعذر الاتصال. تأكد من صحة الرابط ومن نشر تطبيق الويب بصلاحية "Anyone".');
   if(ok)setView('syncData');
 }
@@ -4130,9 +4137,16 @@ async function downloadSheetDataToSystem(){
   if(!GAS_URL){alert('يرجى إدخال رابط Google Sheets وحفظه أولًا.');return}
   if(!confirm('سيتم سحب البيانات الموجودة حاليًا على الشيت المربوط، واستبدال كل بيانات النظام الحالية على هذا الجهاز بها (الحسابات، المتبرعين، المشاريع، القنوات، النوايا). هذا الإجراء يحذف أي بيانات مختلفة كانت موجودة على الجهاز ولا يمكن التراجع عنه. هل تريد المتابعة؟'))return;
   updateSyncViewBadge('connecting');
-  const ok=await syncPull();
+  let data=null;
+  try{try{data=await gasCall('getAll')}catch(e){data=await gasJsonpGet()}}catch(e){data=null}
+  if(!data||data.error){updateSyncViewBadge('off');alert('تعذر الاتصال بالشيت. تأكد من الرابط ومن نشر تطبيق الويب بصلاحية "Anyone" ثم حاول مرة أخرى.');return}
+  if(!hasRemoteData(data) && hasLocalData()){
+    updateSyncViewBadge(lastSyncAt?'on':'connecting');
+    if(!confirm('تنبيه هام: الشيت المربوط فارغ حاليًا ولا يحتوي على أي بيانات. لو تابعت، سيتم مسح كل بيانات النظام الموجودة على هذا الجهاز نهائيًا بدون أي بديل، ولن يمكن استرجاعها. هل أنت متأكد فعلًا من المتابعة؟'))return;
+  }
+  const ok=await syncPull({forceOverwriteLocal:true});
   updateSyncViewBadge(ok?'on':'off');
-  alert(ok?'تم استيراد بيانات الشيت إلى النظام بنجاح ✓':'تعذر الاتصال بالشيت، أو لا توجد بيانات عليه حتى الآن.');
+  alert(ok?'تم استيراد بيانات الشيت إلى النظام بنجاح ✓':'تعذر الاتصال بالشيت.');
   if(ok)setView('syncData');
 }
 
