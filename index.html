@@ -842,6 +842,28 @@ body{overflow:hidden!important;}
 #activationArea{margin-top:4px}
 #activationArea .field{margin-bottom:12px}
 </style>
+<style>
+/* === DONATION MODULE: New Donation + Donation Records === */
+.donation-module-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.donation-module-tab{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-weight:800;color:var(--muted);cursor:pointer}
+.donation-module-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.donation-module-panel{background:#fff;border:1px solid #E6ECEA;border-radius:15px;padding:18px;box-shadow:var(--shadow)}
+.donation-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.donation-record-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+.donation-record-table{width:100%;border-collapse:collapse;min-width:900px}
+.donation-record-table th,.donation-record-table td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px;vertical-align:middle}
+.donation-record-table th{background:#F5F8F7;color:var(--primary-dark);font-weight:800;position:sticky;top:0}
+.donation-record-table tr:hover td{background:#FAFCFB}
+.donation-summary-card{background:#F7FAF9;border:1px solid #E3ECE8;border-radius:12px;padding:13px;margin-bottom:12px}
+.donation-summary-card .summary-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.donation-summary-card .summary-name{font-weight:800;font-size:17px;color:var(--primary-dark)}
+.donation-summary-card .summary-total{font-weight:800;color:var(--gold)}
+@media(max-width:700px){.donation-form-grid{grid-template-columns:1fr}}
+</style>
+<style>
+#app>.top-tabs~#donationModuleView{margin-right:300px!important;height:calc(100vh - 122px)!important;min-height:0!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;padding:24px 28px 34px!important}
+@media(max-width:760px){#app>.top-tabs~#donationModuleView{margin-right:300px!important;height:calc(100vh - 96px)!important;padding:12px 10px 24px!important}}
+</style>
 </head>
 <body>
 
@@ -901,6 +923,7 @@ body{overflow:hidden!important;}
 </header>
 
 <div class="top-tabs"><div class="top-tab active" id="sideHomeBtn" onclick="setView('donors')"><span class="nav-icon"><svg viewbox="0 0 24 24"><path d="m3 10 9-7 9 7"></path><path d="M5 9v11h14V9"></path><path d="M9 20v-6h6v6"></path></svg></span><span class="nav-label">الرئيسية</span></div>
+<div class="top-tab" id="tabDonationModuleBtn" onclick="setView('donationModule')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg></span><span class="nav-label">تبرع جديد</span></div>
 <div class="top-tab" id="tabDonorsBtn" onclick="setView('donors')"><span class="nav-icon"><svg viewbox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.5-3.5 2.5-5.5 6-5.5s5.5 2 6 5.5"></path><path d="M16 6.5a3 3 0 0 1 0 5.9"></path><path d="M17 14.7c2.2.5 3.5 2.1 4 5.3"></path></svg></span><span class="nav-label">المتبرعون</span></div>
 <div class="top-tab" id="tabNewBtn" onclick="setView('newdonors')"><span class="nav-icon"><svg viewbox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.5-3.5 2.5-5.5 6-5.5s5.5 2 6 5.5"></path><path d="M16 6.5a3 3 0 0 1 0 5.9"></path><path d="M17 14.7c2.2.5 3.5 2.1 4 5.3"></path></svg></span><span class="nav-label">متبرعون جدد</span></div>
 <div class="top-tab" id="tabMonthlyBtn" onclick="setView('monthlydonors')"><span class="nav-icon"><svg viewbox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.5-3.5 2.5-5.5 6-5.5s5.5 2 6 5.5"></path><path d="M16 6.5a3 3 0 0 1 0 5.9"></path><path d="M17 14.7c2.2.5 3.5 2.1 4 5.3"></path></svg></span><span class="nav-label">المتبرعون الشهريون</span></div>
@@ -945,6 +968,52 @@ body{overflow:hidden!important;}
   <div class="list" id="listArea"></div>
 </div>
 
+<div id="donationModuleView" class="hidden">
+  <div class="donation-module-tabs">
+    <button class="donation-module-tab active" id="donationModuleNewTab" onclick="selectDonationModuleTab('new')">تبرع جديد</button>
+    <button class="donation-module-tab" id="donationModuleRecordsTab" onclick="selectDonationModuleTab('records')">سجلات التبرعات</button>
+  </div>
+
+  <div id="donationModuleNewPanel" class="donation-module-panel">
+    <div class="manager-box"><b>تسجيل تبرع جديد:</b> سيتم ربط التبرع بالمتبرع الموجود تلقائيًا إذا كان الاسم مسجلًا من قبل، ولن يتم إنشاء متبرع مكرر. كل تبرع جديد يدخل مباشرة في دورة اعتماد الإدارة المالية الحالية.</div>
+    <div class="donation-form-grid">
+      <div class="field"><label>التاريخ</label><input id="md_date" type="date" max="2050-12-31" value="${todayStr()}"></div>
+      <div class="field"><label>قيمة التبرع</label><input id="md_amount" type="number" min="0" step="0.01" placeholder="قيمة التبرع"></div>
+      <div class="field"><label>اسم المتبرع</label><input id="md_name" type="text" placeholder="اسم المتبرع"></div>
+      <div class="field"><label>رقم التليفون</label><input id="md_phone" type="tel" placeholder="رقم التليفون"></div>
+      <div class="field"><label>اسم المشروع</label><select id="md_project" onchange="syncModuleDonationIntention()">${donationProjectOptions()}</select></div>
+      <div class="field"><label>النية</label><select id="md_intention">${donationIntentionOptions('')}</select></div>
+      <div class="field"><label>مكان التبرع</label><input id="md_location" list="locationsDatalist" placeholder="مقر المؤسسة / بازار / مول ..."></div>
+      <div class="field"><label>قناة أو طريقة التبرع</label><select id="md_method"></select></div>
+      <div class="field"><label>الموظف المسؤول</label><input id="md_employee" type="text" readonly value="" title="يتم تحديد الموظف المسؤول تلقائيًا من حساب المستخدم الحالي"></div>
+      <div class="field"><label>صورة أو إيصال التبرع</label><input id="md_attachment" type="file" accept="image/*"><div class="attachment-note">اختياري — سيتم ضغط الصورة تلقائيًا قبل الحفظ.</div></div>
+      <div class="field"><label>حالة الحركة</label><select id="md_movementStatus"><option value="قيد التنفيذ">قيد التنفيذ</option><option value="ناجحة">ناجحة</option><option value="مرفوضة">مرفوضة</option><option value="اخرى">اخرى</option></select></div>
+      <div class="field"><label>حالة الاعتماد المالي</label><input value="بانتظار اعتماد الإدارة المالية" readonly></div>
+    </div>
+    <div class="field"><label>ملاحظات</label><textarea id="md_notes" placeholder="ملاحظات إضافية (اختياري)"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveModuleDonation()">حفظ التبرع</button>
+      <button class="btn-outline" onclick="resetModuleDonationForm()">مسح البيانات</button>
+    </div>
+  </div>
+
+  <div id="donationModuleRecordsPanel" class="donation-module-panel hidden">
+    <div class="toolbar">
+      <input id="moduleDonationSearch" type="search" placeholder="ابحث باسم المتبرع أو رقم الهاتف أو المشروع">
+      <div class="daterange">
+        <label>من</label><input type="date" id="moduleDonationFrom" max="2050-12-31">
+        <label>إلى</label><input type="date" id="moduleDonationTo" max="2050-12-31">
+        <button class="btn-outline btn-small" onclick="renderModuleDonationRecords()">تطبيق</button>
+        <button class="btn-outline btn-small" onclick="clearModuleDonationFilters()">مسح الفلاتر</button>
+      </div>
+      <button class="btn-outline btn-small" onclick="printModuleDonationRecords()">طباعة</button>
+      <button class="btn-primary btn-small" onclick="exportModuleDonationExcel()">تصدير Excel</button>
+    </div>
+    <div class="stats" id="moduleDonationStats"></div>
+    <div id="moduleDonationRecords"></div>
+  </div>
+</div>
+
 <div id="monthlyDonorsView" class="hidden">
   <div class="manager-box"><b>المتبرعون الشهريون:</b> تُعرض هنا تلقائيًا كل الأفراد الذين كُتب في ملاحظات إحدى تبرعاتهم عبارة "متبرع شهري".</div>
   <div class="stats" id="monthlyDonorsStats"></div>
@@ -974,6 +1043,7 @@ body{overflow:hidden!important;}
     <div class="report-chips" id="reportSubTabsBar"></div>
     <div class="report-chips" id="reportFinanceTabsBar" style="margin-top:0"></div>
     <div class="report-chips" id="reportChannelFilterBar" style="margin-top:0"></div>
+    <div class="report-chips" id="reportMovementStatusFilterBar" style="margin-top:0"></div>
   </div>
   <div class="stats" id="reportStats"></div>
   <div class="report-charts-grid">
@@ -1468,9 +1538,9 @@ const INTENTION_TYPES=['زكاة مال','صدقة جارية','كفالة أي�
 const MANAGER_CATEGORIES_DEFAULT=['رئيس','مدير أول','مدير ثاني','مدير ثالث'];
 const REJECTED_ACTION='اعتذر / رفض';
 
-const VIEWS=['donors','newdonors','monthlydonors','projects','donations','donationCounts','donorRatings','channels','reports','financeReview','settings','syncData','backup'];
-const TAB_IDS={donors:'tabDonorsBtn',newdonors:'tabNewBtn',monthlydonors:'tabMonthlyBtn',projects:'tabProjectsBtn',donations:'tabDonationsBtn',donationCounts:'tabDonationCountsBtn',donorRatings:'tabDonorRatingsBtn',channels:'tabChannelsBtn',reports:'tabReportsBtn',financeReview:'financeTabBtn',settings:'sideSettingsBtn',syncData:'sideSyncBtn',backup:'sideBackupBtn'};
-const VIEW_IDS={donors:'donorsView',newdonors:'newDonorsView',monthlydonors:'monthlyDonorsView',projects:'projectsView',donations:'donationsView',donationCounts:'donationCountsView',donorRatings:'donorRatingsView',channels:'channelsView',reports:'reportsView',financeReview:'financeReviewView',settings:'settingsView',syncData:'syncDataView',backup:'backupView'};
+const VIEWS=['donors','donationModule','newdonors','monthlydonors','projects','donations','donationCounts','donorRatings','channels','reports','financeReview','settings','syncData','backup'];
+const TAB_IDS={donors:'tabDonorsBtn',donationModule:'tabDonationModuleBtn',newdonors:'tabNewBtn',monthlydonors:'tabMonthlyBtn',projects:'tabProjectsBtn',donations:'tabDonationsBtn',donationCounts:'tabDonationCountsBtn',donorRatings:'tabDonorRatingsBtn',channels:'tabChannelsBtn',reports:'tabReportsBtn',financeReview:'financeTabBtn',settings:'sideSettingsBtn',syncData:'sideSyncBtn',backup:'sideBackupBtn'};
+const VIEW_IDS={donors:'donorsView',donationModule:'donationModuleView',newdonors:'newDonorsView',monthlydonors:'monthlyDonorsView',projects:'projectsView',donations:'donationsView',donationCounts:'donationCountsView',donorRatings:'donorRatingsView',channels:'channelsView',reports:'reportsView',financeReview:'financeReviewView',settings:'settingsView',syncData:'syncDataView',backup:'backupView'};
 const REPORT_PERIODS=[
   {key:'weekly',label:'تقرير أسبوعي'},
   {key:'monthly',label:'تقرير شهري'},
@@ -1556,6 +1626,7 @@ function isManagerRole(u){return !!u&&(u.role==='manager'||u.role==='superadmin'
 function isFinance(u){return !!u&&u.role==='finance'}
 const PERMISSION_MODULES=[
  {key:'home',label:'الرئيسية'},
+ {key:'donationModule',label:'تبرع جديد'},
  {key:'donors',label:'المتبرعون'},
  {key:'newdonors',label:'متبرعون جدد'},
  {key:'monthlydonors',label:'المتبرعون الشهريون'},
@@ -2031,6 +2102,7 @@ function setView(v){
   document.getElementById('sideHomeBtn')?.classList.toggle('active',v==='donors');
   if(v==='donors')document.getElementById('tabDonorsBtn')?.classList.remove('active');
   if(v==='donors')render();
+  else if(v==='donationModule')renderDonationModule();
   else if(v==='newdonors')renderNewDonors();
   else if(v==='monthlydonors')renderMonthlyDonors();
   else if(v==='projects')renderProjects();
@@ -2689,11 +2761,11 @@ function reportRows(){
  const list=reportBaseDonors();const rows=[];
  list.forEach(d=>reportHistoryForDonor(d).filter(h=>{
    if(!h||h.type!=='donation')return false;
-   if(!inRange(h.date,from,to)||!locationMatches(h)||!reportChannelMatches(h))return false;
+   if(!inRange(h.date,from,to)||!locationMatches(h)||!reportChannelMatches(h)||!reportMovementStatusMatches(h))return false;
    /* حالة الاعتماد المالي فلتر عام للتقرير كله، حتى تتفاعل الإحصائيات والرسوم والتبويبات معًا. */
    if(['approved','rejected','pending'].includes(reportFinanceTab)) return normalizeFinanceStatus(h.financeStatus)===reportFinanceTab;
    return true;
- }).forEach(h=>rows.push({donor:d.name,...h})));
+ }).forEach(h=>rows.push({donor:d.name,employeeId:h.responsibleEmployeeId||h.createdBy||d.employeeId||'',employee:h.responsibleEmployeeName||USERS.find(u=>u.id===(h.responsibleEmployeeId||h.createdBy||d.employeeId))?.fullName||'—',...h})));
  return rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 }
 function reportContactRows(){
@@ -2711,6 +2783,16 @@ function reportMovementRows(){
 let reportSubTab='newdonors';
 let reportFinanceTab='all';
 let reportChannelFilter='all';
+let reportMovementStatusFilter='all';
+function normalizeMovementStatus(value){
+ const v=normName(value).replace(/[ًٌٍَُِّْـ]/g,'');
+ if(v==='ناجحة'||v==='ناجح'||v==='success'||v==='successful')return 'ناجحة';
+ if(v==='مرفوضة'||v==='مرفوض'||v==='rejected'||v==='reject')return 'مرفوضة';
+ if(v==='اخرى'||v==='أخرى'||v==='اخر'||v==='other')return 'اخرى';
+ return 'قيد التنفيذ';
+}
+function movementStatusLabel(value){return normalizeMovementStatus(value)}
+function reportMovementStatusMatches(row){return reportMovementStatusFilter==='all'||normalizeMovementStatus(row&&row.movementStatus)===reportMovementStatusFilter;}
 function selectReportChannelFilter(value){ reportChannelFilter=value||'all'; renderReports(); }
 function reportChannelMatches(row){ return reportChannelFilter==='all' || normName(row&&row.method)===normName(reportChannelFilter); }
 let reportCounts={newdonors:0,intentions:0,projects:0,channels:0,donations:0,movements:0,financial:0};
@@ -2756,7 +2838,14 @@ function renderReportSubTabsBar(){
      channels.map(c=>`<button class="chip ${normName(reportChannelFilter)===normName(c)?'active':''}" data-channel="${escapeHtml(c)}" onclick="selectReportChannelFilter(this.dataset.channel)">${escapeHtml(c)}</button>`).join('');
    cbar.classList.remove('hidden');
  }
+ renderReportMovementStatusBar();
 }
+function renderReportMovementStatusBar(){
+ const bar=document.getElementById('reportMovementStatusFilterBar'); if(!bar)return;
+ const opts=[['all','كل حالات الحركة'],['ناجحة','ناجحة'],['مرفوضة','مرفوضة'],['قيد التنفيذ','قيد التنفيذ'],['اخرى','اخرى']];
+ bar.innerHTML=opts.map(([k,l])=>`<button class="chip ${reportMovementStatusFilter===k?'active':''}" onclick="selectReportMovementStatusFilter('${k}')">${l}</button>`).join('');
+}
+function selectReportMovementStatusFilter(value){reportMovementStatusFilter=value||'all';renderReports();}
 function normalizeFinanceStatus(value){
  const v=normName(value).replace(/[ًٌٍَُِّْـ]/g,'');
  if(v==='approved'||v==='approve'||v.includes('معتمد ماليا')||v.includes('معتمدة ماليا'))return 'approved';
@@ -2771,7 +2860,7 @@ function reportFinancialRows(){
  const {from,to}=currentReportRange(); const rows=[];
  reportBaseDonors().forEach(d=>reportHistoryForDonor(d).forEach(h=>{
    const isDonation=h&&typeof h==='object'&&(h.type==='donation'||h.action==='تبرع جديد'||h.action==='تبرع');
-   if(!isDonation||String(h.status||'')==='pending'||!inRange(h.date,from,to)||!locationMatches(h)||!reportChannelMatches(h))return;
+   if(!isDonation||String(h.status||'')==='pending'||!inRange(h.date,from,to)||!locationMatches(h)||!reportChannelMatches(h)||!reportMovementStatusMatches(h))return;
    const financeStatus=normalizeFinanceStatus(h.financeStatus);
    rows.push({donor:d.name,employeeId:d.employeeId,employee:USERS.find(u=>u.id===d.employeeId)?.fullName||'—',...h,financeStatus});
  }));
@@ -2787,8 +2876,8 @@ function renderFinancialReport(){
  const rows=reportFinancialRows(); const el=document.getElementById('reportFinancialList'); if(!el)return;
  const total=rows.reduce((s,r)=>s+(Number(String(r.amount).replace(/,/g,''))||0),0);
  const count=rows.length;
- const byChannel={},byProject={},byStatus={approved:0,rejected:0,pending:0};
- rows.forEach(r=>{const amount=Number(String(r.amount).replace(/,/g,''))||0;const c=r.method||'غير محدد';byChannel[c]=(byChannel[c]||0)+amount;const pr=r.project||'بدون مشروع';byProject[pr]=(byProject[pr]||0)+amount;byStatus[normalizeFinanceStatus(r.financeStatus)]+=amount});
+ const byChannel={},byProject={},byStatus={approved:0,rejected:0,pending:0},byMovementStatus={'ناجحة':0,'مرفوضة':0,'قيد التنفيذ':0,'اخرى':0};
+ rows.forEach(r=>{const amount=Number(String(r.amount).replace(/,/g,''))||0;const c=r.method||'غير محدد';byChannel[c]=(byChannel[c]||0)+amount;const pr=r.project||'بدون مشروع';byProject[pr]=(byProject[pr]||0)+amount;byStatus[normalizeFinanceStatus(r.financeStatus)]+=amount;byMovementStatus[normalizeMovementStatus(r.movementStatus)]+=amount});
  let html=`<div class="manager-box"><b>التقارير المالية:</b> تعرض إجماليات مجمعة حسب البند/الحالة/القناة/المشروع وفق الأبعاد المختارة، دون إظهار أسماء المتبرعين.</div><div class="stats"><div class="stat gold"><div class="num">${total.toLocaleString('ar-EG')}</div><div class="lbl">إجمالي القيمة (جنيه)</div></div><div class="stat"><div class="num">${count}</div><div class="lbl">عدد الحركات الفعلية</div></div></div>`;
  const addGroup=(title,map,label)=>{
    const entries=Object.entries(map).filter(([,v])=>Number(v)!==0).sort((a,b)=>b[1]-a[1]);
@@ -2801,7 +2890,7 @@ function renderFinancialReport(){
  else if(reportFinanceTab==='approved') addGroup('إجمالي التبرعات المعتمدة ماليًا',{'معتمد ماليًا':total},'جنيه');
  else if(reportFinanceTab==='rejected') addGroup('إجمالي التبرعات المرفوضة ماليًا',{'مرفوض ماليًا':total},'جنيه');
  else if(reportFinanceTab==='pending') addGroup('إجمالي التبرعات في انتظار اعتماد المالية',{'في انتظار اعتماد المالية':total},'جنيه');
- else { addGroup('إجمالي حسب حالة الاعتماد المالي',{'معتمد ماليًا':byStatus.approved,'مرفوض ماليًا':byStatus.rejected,'في انتظار اعتماد المالية':byStatus.pending},'جنيه'); addGroup('إجمالي حسب قناة التبرع',byChannel,'جنيه'); addGroup('إجمالي حسب المشروع',byProject,'جنيه'); }
+ else { addGroup('إجمالي حسب حالة الاعتماد المالي',{'معتمد ماليًا':byStatus.approved,'مرفوض ماليًا':byStatus.rejected,'في انتظار اعتماد المالية':byStatus.pending},'جنيه'); addGroup('إجمالي حسب حالة الحركة',byMovementStatus,'جنيه'); addGroup('إجمالي حسب قناة التبرع',byChannel,'جنيه'); addGroup('إجمالي حسب المشروع',byProject,'جنيه'); }
  el.innerHTML=html||'<div class="empty">لا توجد حركات تبرع ضمن الأبعاد المحددة.</div>';
 }
 function newDonorsInRange(from,to){
@@ -2909,6 +2998,7 @@ function renderReports(){
  const contactedCount=new Set(contactRows.map(r=>r.donor)).size;
  const repliedCount=new Set(contactRows.filter(r=>REPLIED_ACTIONS.includes(r.action)).map(r=>r.donor)).size;
  const rejectedCount=new Set(contactRows.filter(r=>r.action===REJECTED_ACTION).map(r=>r.donor)).size;
+  const movementStatusCounts={'ناجحة':rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='ناجحة').length,'مرفوضة':rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='مرفوضة').length,'قيد التنفيذ':rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='قيد التنفيذ').length,'اخرى':rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='اخرى').length};
  document.getElementById('reportStats').innerHTML=`
   <div class="stat gold"><div class="num">${total.toLocaleString('ar-EG')}</div><div class="lbl">إجمالي التبرعات (جنيه)</div></div>
   <div class="stat"><div class="num">${rows.length}</div><div class="lbl">عدد عمليات التبرع</div></div>
@@ -2917,6 +3007,7 @@ function renderReports(){
   <div class="stat amber"><div class="num">${contactedCount}</div><div class="lbl">عدد تم التواصل معهم</div></div>
   <div class="stat green"><div class="num">${repliedCount}</div><div class="lbl">عدد تم الرد</div></div>
   <div class="stat red"><div class="num">${rejectedCount}</div><div class="lbl">عدد الرافضين</div></div>
+   <div class="stat"><div class="num">${movementStatusCounts['ناجحة']}</div><div class="lbl">حركات ناجحة</div></div><div class="stat"><div class="num">${movementStatusCounts['مرفوضة']}</div><div class="lbl">حركات مرفوضة</div></div><div class="stat"><div class="num">${movementStatusCounts['قيد التنفيذ']}</div><div class="lbl">حركات قيد التنفيذ</div></div><div class="stat"><div class="num">${movementStatusCounts['اخرى']}</div><div class="lbl">حركات أخرى</div></div>
   <div class="stat small-note" style="align-self:center">الفترة: ${fmtDate(from)} — ${fmtDate(to)}</div>`;
 
  reportCounts.newdonors=newDonors.length;
@@ -2944,8 +3035,8 @@ function renderReports(){
  reportCounts.donations=dimensionRows.length;
  document.getElementById('reportDonationsList').innerHTML=dimensionRows.length?dimensionRows.map(r=>`<div class="card" style="border-inline-start-color:var(--gold)">
   <div class="info"><div class="name">${escapeHtml(r.donor)}</div>
-  <div class="meta">${fmtDate(r.date)} · <b>${money(r.amount)}</b>${r.project?` · مشروع: ${escapeHtml(r.project)}`:''}${r.method?` · ${escapeHtml(r.method)}`:''}${r.location?` · المكان: ${escapeHtml(r.location)}`:''}</div>
-  <div class="small-note" style="margin-top:4px">بواسطة: ${escapeHtml(r.by||'—')}${r.notes?` · ${escapeHtml(r.notes)}`:''}${r.attachmentData?attachmentMarkup(r):''}</div></div>
+  <div class="meta">${fmtDate(r.date)} · <b>${money(r.amount)}</b>${r.project?` · مشروع: ${escapeHtml(r.project)}`:''}${r.method?` · ${escapeHtml(r.method)}`:''}${r.location?` · المكان: ${escapeHtml(r.location)}`:''} · حالة الحركة: ${escapeHtml(movementStatusLabel(r.movementStatus))}</div>
+  <div class="small-note" style="margin-top:4px">الموظف المسؤول: ${escapeHtml(r.employee||r.by||'—')} · بواسطة: ${escapeHtml(r.by||'—')}${r.notes?` · ${escapeHtml(r.notes)}`:''}${r.attachmentData?attachmentMarkup(r):''}</div></div>
  </div>`).join(''):'<div class="empty">لا توجد تبرعات ضمن الفترة المحددة.</div>';
  let movementRows=reportMovementRows();
  if(!['all','channel','projects'].includes(reportFinanceTab)){
@@ -2955,7 +3046,7 @@ function renderReports(){
  reportCounts.movements=movementRows.length;
  document.getElementById('reportMovementsList').innerHTML=movementRows.length?movementRows.map(r=>`<div class="card" style="border-inline-start-color:${r.type==='donation'?'var(--gold)':'var(--primary)'}">
   <div class="info"><div class="name">${escapeHtml(r.donor)} <span class="badge">${r.type==='donation'?'تبرع':'تواصل'}</span></div>
-  <div class="meta">${fmtDate(r.date)} · <b>${escapeHtml(r.action||'حركة')}</b>${r.amount?` · ${money(r.amount)}`:''}${r.location?` · المكان: ${escapeHtml(r.location)}`:''}${r.project?` · المشروع: ${escapeHtml(r.project)}`:''}</div>
+  <div class="meta">${fmtDate(r.date)} · <b>${escapeHtml(r.action||'حركة')}</b>${r.amount?` · ${money(r.amount)}`:''}${r.location?` · المكان: ${escapeHtml(r.location)}`:''}${r.project?` · المشروع: ${escapeHtml(r.project)}`:''}${r.type==='donation'?` · حالة الحركة: ${escapeHtml(movementStatusLabel(r.movementStatus))}`:''}</div>
   <div class="small-note" style="margin-top:4px">بواسطة: ${escapeHtml(r.by||'—')}${r.notes?` · ${escapeHtml(r.notes)}`:''}</div></div>
  </div>`).join(''):'<div class="empty">لا توجد حركات ضمن الفترة والمكان المحددين.</div>';
 
@@ -3010,15 +3101,15 @@ function exportCurrentReportTabExcel(){
  }else if(reportSubTab==='channels'){
    const map={};reportDonationRowsForDimensions().forEach(r=>{const k=r.method||'غير محدد';map[k]=map[k]||{amount:0,count:0};map[k].amount+=Number(String(r.amount).replace(/,/g,''))||0;map[k].count++});Object.entries(map).sort((a,b)=>b[1].amount-a[1].amount).forEach(([k,v])=>rows.push([k,v.amount,v.count]));
  }else if(reportSubTab==='donations'){
-   reportDonationRowsForDimensions().forEach(r=>rows.push([r.donor,fmtDate(r.date),r.amount,r.project||'',donationIntention(r),r.location||'',r.method||'',r.notes||'',r.by||'']));
+   reportDonationRowsForDimensions().forEach(r=>rows.push([r.donor,fmtDate(r.date),r.amount,r.project||'',donationIntention(r),r.location||'',r.method||'',movementStatusLabel(r.movementStatus),r.notes||'',r.by||'']));
  }else if(reportSubTab==='movements'){
-   reportMovementRows().forEach(r=>rows.push([r.donor,fmtDate(r.date),r.type==='donation'?'تبرع':'تواصل',r.action||'',r.amount||'',r.project||'',r.location||'',r.notes||'',r.by||'']));
+   reportMovementRows().forEach(r=>rows.push([r.donor,fmtDate(r.date),r.type==='donation'?'تبرع':'تواصل',r.action||'',r.amount||'',r.project||'',r.location||'',r.type==='donation'?movementStatusLabel(r.movementStatus):'',r.notes||'',r.by||'']));
  }else if(reportSubTab==='financial'){
    const fr=reportFinancialRows(), map={};
    fr.forEach(r=>{const key=reportFinanceTab==='channel'?(r.method||'غير محدد'):reportFinanceTab==='projects'?(r.project||'بدون مشروع'):financeStatusLabel(r.financeStatus); map[key]=(map[key]||0)+(Number(String(r.amount).replace(/,/g,''))||0);});
    Object.entries(map).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>rows.push([k,v,fr.filter(r=>(reportFinanceTab==='channel'?(r.method||'غير محدد'):reportFinanceTab==='projects'?(r.project||'بدون مشروع'):financeStatusLabel(r.financeStatus))===k).length]));
  }
- const headers={newdonors:['اسم المتبرع','رقم التليفون','تاريخ التسجيل'],intentions:['النية','إجمالي (جنيه)','عدد التبرعات'],projects:['المشروع','إجمالي (جنيه)','عدد التبرعات'],channels:['قناة التبرع','إجمالي (جنيه)','عدد العمليات'],donations:['اسم المتبرع','التاريخ','قيمة التبرع','المشروع','النية','المكان','قناة التبرع','ملاحظات','بواسطة'],movements:['اسم المتبرع','التاريخ','النوع','الحركة','القيمة','المشروع','المكان','ملاحظات','بواسطة'],financial:['البند','إجمالي (جنيه)','عدد الحركات']};
+ const headers={newdonors:['اسم المتبرع','رقم التليفون','تاريخ التسجيل'],intentions:['النية','إجمالي (جنيه)','عدد التبرعات'],projects:['المشروع','إجمالي (جنيه)','عدد التبرعات'],channels:['قناة التبرع','إجمالي (جنيه)','عدد العمليات'],donations:['اسم المتبرع','التاريخ','قيمة التبرع','المشروع','النية','المكان','قناة التبرع','حالة الحركة','الموظف المسؤول','ملاحظات','بواسطة'],movements:['اسم المتبرع','التاريخ','النوع','الحركة','القيمة','المشروع','المكان','حالة الحركة','ملاحظات','بواسطة'],financial:['البند','إجمالي (جنيه)','عدد الحركات']};
  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([headers[reportSubTab]||['البيانات'],...rows]);ws['!cols']=(headers[reportSubTab]||['البيانات']).map(()=>({wch:20}));XLSX.utils.book_append_sheet(wb,ws,currentReportTabTitle().slice(0,31));XLSX.writeFile(wb,currentReportTabTitle().replace(/\s+/g,'_')+'_'+todayStr()+'.xlsx');
 }
 function exportReportExcel(){
@@ -3026,8 +3117,8 @@ function exportReportExcel(){
  const rows=reportRows();
  const newDonors=newDonorsInRange(from,to);
  const periodLabel=reportCustomRange?('فترة_مخصصة_'+(from||'بداية')+'_'+(to||todayStr())):((REPORT_PERIODS.find(p=>p.key===currentReportPeriod)||{}).label||'تقرير');
- const data=[['اسم المتبرع','التاريخ','قيمة التبرع','المشروع','النية','مكان الحركة','قناة التبرع','ملاحظات','بواسطة']];
- rows.forEach(r=>data.push([r.donor,fmtDate(r.date),r.amount,r.project||'',donationIntention(r),r.location||'',r.method||'',r.notes||'',r.by||'']));
+ const data=[['اسم المتبرع','التاريخ','قيمة التبرع','المشروع','النية','مكان الحركة','قناة التبرع','حالة الحركة','الموظف المسؤول','ملاحظات','بواسطة']];
+ rows.forEach(r=>data.push([r.donor,fmtDate(r.date),r.amount,r.project||'',donationIntention(r),r.location||'',r.method||'',movementStatusLabel(r.movementStatus),r.employee||r.by||'',r.notes||'',r.by||'']));
  const newData=[['اسم المتبرع الجديد','رقم التليفون','تاريخ التسجيل']];
  newDonors.forEach(d=>newData.push([d.name,d.phone||'',fmtDate(d.registeredDate)]));
  const byIntention={};
@@ -3036,7 +3127,7 @@ function exportReportExcel(){
  Object.entries(byIntention).sort((a,b)=>b[1].amount-a[1].amount).forEach(([name,v])=>intentData.push([name,v.amount,v.count]));
  const wb=XLSX.utils.book_new();
  const ws=XLSX.utils.aoa_to_sheet(data);
- ws['!cols']=[{wch:22},{wch:12},{wch:12},{wch:16},{wch:16},{wch:20},{wch:18},{wch:24},{wch:16}];
+ ws['!cols']=[{wch:22},{wch:12},{wch:12},{wch:16},{wch:16},{wch:20},{wch:18},{wch:18},{wch:24},{wch:16}];
  XLSX.utils.book_append_sheet(wb,ws,'تقرير التبرعات');
  const ws2=XLSX.utils.aoa_to_sheet(newData);
  ws2['!cols']=[{wch:22},{wch:14},{wch:14}];
@@ -3311,11 +3402,29 @@ function ensureProject(name){
 }
 
 /* ---------- new donation (separate action) ---------- */
-function donationProjectOptions(){
- return `<option value="">اختر المشروع</option>`+projects.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
+function donationProjectOptions(selected=''){
+ return `<option value="">اختر المشروع</option>`+projects.filter(p=>p&&String(p.name||'').trim()).map(p=>`<option value="${escapeHtml(p.name)}" ${normName(p.name)===normName(selected)?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
 }
 function donationIntentionOptions(selected){
- return `<option value="">اختر النية</option>`+intentions.map(x=>`<option value="${escapeHtml(x)}" ${normName(x)===normName(selected)?'selected':''}>${escapeHtml(x)}</option>`).join('');
+ const coded=[...new Set((Array.isArray(intentions)?intentions:[]).map(x=>String(x??'').trim()).filter(Boolean))];
+ return `<option value="">اختر النية</option>`+coded.map(x=>`<option value="${escapeHtml(x)}" ${normName(x)===normName(selected)?'selected':''}>${escapeHtml(x)}</option>`).join('');
+}
+function donationChannelOptions(selected=''){
+ const coded=[...new Set((Array.isArray(channels)?channels:[]).map(x=>String(x??'').trim()).filter(Boolean))];
+ return `<option value="">اختر قناة أو طريقة التبرع</option>`+coded.map(x=>`<option value="${escapeHtml(x)}" ${normName(x)===normName(selected)?'selected':''}>${escapeHtml(x)}</option>`).join('');
+}
+function refreshModuleDonationReferenceFields(){
+ const project=document.getElementById('md_project');
+ const intention=document.getElementById('md_intention');
+ const method=document.getElementById('md_method');
+ const currentProject=project?.value||'';
+ const currentIntention=intention?.value||'';
+ const currentMethod=method?.value||'';
+ if(project)project.innerHTML=donationProjectOptions(currentProject);
+ if(intention)intention.innerHTML=donationIntentionOptions(currentIntention);
+ if(method)method.innerHTML=donationChannelOptions(currentMethod);
+ const employee=document.getElementById('md_employee');
+ if(employee&&currentUser)employee.value=currentUser.fullName||'';
 }
 function syncDonationIntention(){
  const project=document.getElementById('dn_project')?.value||'';
@@ -3324,6 +3433,221 @@ function syncDonationIntention(){
  const p=projects.find(x=>normName(x.name)===normName(project));
  intentionSelect.value=p&&p.intention?p.intention:'';
 }
+
+/* ---------- donation module: standalone new-donation workflow + grouped records ---------- */
+let donationModuleTab='new';
+let moduleDonationSearchTerm='';
+
+function selectDonationModuleTab(tab){
+  if(!canModule('donationModule','view',currentUser)){alert('ليس لديك صلاحية الوصول إلى مديول التبرعات.');return}
+  donationModuleTab=tab==='records'?'records':'new';
+  document.getElementById('donationModuleNewTab')?.classList.toggle('active',donationModuleTab==='new');
+  document.getElementById('donationModuleRecordsTab')?.classList.toggle('active',donationModuleTab==='records');
+  document.getElementById('donationModuleNewPanel')?.classList.toggle('hidden',donationModuleTab!=='new');
+  document.getElementById('donationModuleRecordsPanel')?.classList.toggle('hidden',donationModuleTab!=='records');
+  if(donationModuleTab==='records')renderModuleDonationRecords();
+}
+
+function renderDonationModule(){
+  if(!currentUser)return;
+  selectDonationModuleTab(donationModuleTab);
+  const date=document.getElementById('md_date'); if(date&&!date.value)date.value=todayStr();
+  refreshProjectsDatalist();
+  refreshModuleDonationReferenceFields();
+}
+
+function moduleDonationRows(){
+  const rows=[];
+  visibleDonors().forEach(d=>{
+    donationEntries(d).forEach(h=>{
+      rows.push({donor:d.name||'—',phone:d.phone||'',donorId:d.id||'',...h});
+    });
+  });
+  return rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+}
+
+function filteredModuleDonationRows(){
+  const q=normName(document.getElementById('moduleDonationSearch')?.value||moduleDonationSearchTerm);
+  const from=document.getElementById('moduleDonationFrom')?.value||'';
+  const to=document.getElementById('moduleDonationTo')?.value||'';
+  let rows=moduleDonationRows().filter(r=>inRange(r.date,from,to));
+  if(q)rows=rows.filter(r=>normName([r.donor,r.phone,r.project,r.intention,r.location,r.method,r.movementStatus||'قيد التنفيذ'].join(' ')).includes(q));
+  return rows;
+}
+
+function renderModuleDonationRecords(){
+  if(!currentUser||!canModule('donationModule','view',currentUser))return;
+  moduleDonationSearchTerm=document.getElementById('moduleDonationSearch')?.value||'';
+  const rows=filteredModuleDonationRows();
+  const total=rows.reduce((s,r)=>s+(Number(String(r.amount||0).replace(/,/g,''))||0),0);
+  const donorsCount=new Set(rows.map(r=>normName(r.donor))).size;
+  const operations=rows.length;
+  const approved=rows.filter(r=>normalizeFinanceStatus(r.financeStatus)==='approved').length;
+  const successful=rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='ناجحة').length;
+  const rejectedMovement=rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='مرفوضة').length;
+  const inProgress=rows.filter(r=>normalizeMovementStatus(r.movementStatus)==='قيد التنفيذ').length;
+  document.getElementById('moduleDonationStats').innerHTML=`
+    <div class="stat gold"><div class="num">${total.toLocaleString('ar-EG')}</div><div class="lbl">إجمالي التبرعات (جنيه)</div></div>
+    <div class="stat"><div class="num">${operations}</div><div class="lbl">عدد عمليات التبرع</div></div>
+    <div class="stat"><div class="num">${donorsCount}</div><div class="lbl">عدد المتبرعين</div></div>
+    <div class="stat green"><div class="num">${approved}</div><div class="lbl">عمليات معتمدة ماليًا</div></div>
+    <div class="stat"><div class="num">${successful}</div><div class="lbl">حركات ناجحة</div></div>
+    <div class="stat"><div class="num">${rejectedMovement}</div><div class="lbl">حركات مرفوضة</div></div>
+    <div class="stat"><div class="num">${inProgress}</div><div class="lbl">قيد التنفيذ</div></div>`;
+
+  const groups=new Map();
+  rows.forEach(r=>{
+    const key=normName(r.donor);
+    if(!groups.has(key))groups.set(key,{name:r.donor,phone:r.phone,rows:[]});
+    groups.get(key).rows.push(r);
+  });
+  const grouped=[...groups.values()].sort((a,b)=>normName(a.name).localeCompare(normName(b.name),'ar'));
+
+  document.getElementById('moduleDonationRecords').innerHTML=grouped.length?grouped.map(g=>{
+    const sum=g.rows.reduce((s,r)=>s+(Number(String(r.amount||0).replace(/,/g,''))||0),0);
+    return `<div class="donation-summary-card">
+      <div class="summary-head">
+        <div><div class="summary-name">${escapeHtml(g.name)}</div><div class="small-note">الهاتف: ${escapeHtml(g.phone||'—')} · عدد التبرعات: ${g.rows.length}</div></div>
+        <div class="summary-total">الإجمالي: ${money(sum)}</div>
+      </div>
+      <div class="donation-record-table-wrap" style="margin-top:10px">
+        <table class="donation-record-table">
+          <thead><tr><th>التاريخ</th><th>القيمة</th><th>المشروع</th><th>النية</th><th>المكان</th><th>القناة</th><th>الموظف المسؤول</th><th>حالة الحركة</th><th>الاعتماد المالي</th><th>الإيصال</th></tr></thead>
+          <tbody>${g.rows.map(r=>{
+            const fs=normalizeFinanceStatus(r.financeStatus);
+            const badge=fs==='approved'?'<span class="badge green">معتمد ماليًا</span>':fs==='rejected'?'<span class="badge red">مرفوض ماليًا</span>':'<span class="badge amber">بانتظار الاعتماد</span>';
+            return `<tr onclick="openFinanceDetail('${r.donorId}','${r.hid}')" style="cursor:pointer">
+              <td>${fmtDate(r.date)}</td><td><b>${money(r.amount)}</b></td><td>${escapeHtml(r.project||'—')}</td><td>${escapeHtml(r.intention||'—')}</td><td>${escapeHtml(r.location||'—')}</td><td>${escapeHtml(r.method||'—')}</td><td>${escapeHtml(r.responsibleEmployeeName||r.by||'—')}</td><td><span class="badge">${escapeHtml(movementStatusLabel(r.movementStatus))}</span></td><td>${badge}</td>
+              <td>${r.attachmentData?'<span class="donation-attachment">📎 موجود</span>':'—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">لا توجد سجلات تبرعات مطابقة للبحث أو الفترة المحددة.</div>';
+}
+
+function clearModuleDonationFilters(){
+  const s=document.getElementById('moduleDonationSearch'); if(s)s.value='';
+  const f=document.getElementById('moduleDonationFrom'); if(f)f.value='';
+  const t=document.getElementById('moduleDonationTo'); if(t)t.value='';
+  moduleDonationSearchTerm='';renderModuleDonationRecords();
+}
+
+function syncModuleDonationIntention(){
+  const project=document.getElementById('md_project')?.value||'';
+  const sel=document.getElementById('md_intention'); if(!sel)return;
+  const p=projects.find(x=>normName(x.name)===normName(project));
+  const linkedIntention=p&&p.intention?String(p.intention).trim():'';
+  if(linkedIntention && intentions.some(x=>normName(x)===normName(linkedIntention))) sel.value=linkedIntention;
+  else if(sel.value && !intentions.some(x=>normName(x)===normName(sel.value))) sel.value='';
+}
+
+function resetModuleDonationForm(){
+  const ms=document.getElementById('md_movementStatus');if(ms)ms.value='قيد التنفيذ';
+  ['md_amount','md_name','md_phone','md_location','md_notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const date=document.getElementById('md_date');if(date)date.value=todayStr();
+  const p=document.getElementById('md_project');if(p)p.selectedIndex=0;
+  const i=document.getElementById('md_intention');if(i)i.selectedIndex=0;
+  const a=document.getElementById('md_attachment');if(a)a.value='';
+  const m=document.getElementById('md_method');if(m)m.selectedIndex=0;
+  const employee=document.getElementById('md_employee');if(employee&&currentUser)employee.value=currentUser.fullName||'';
+}
+
+async function saveModuleDonation(){
+  if(!currentUser||!canModule('donationModule','add',currentUser)){alert('ليس لديك صلاحية إضافة تبرعات.');return}
+  const date=document.getElementById('md_date')?.value||todayStr();
+  const amount=document.getElementById('md_amount')?.value||'';
+  const name=document.getElementById('md_name')?.value.trim()||'';
+  const phone=document.getElementById('md_phone')?.value.trim()||'';
+  const project=document.getElementById('md_project')?.value.trim()||'';
+  const intention=document.getElementById('md_intention')?.value.trim()||'';
+  const location=document.getElementById('md_location')?.value.trim()||'';
+  const method=document.getElementById('md_method')?.value||'';
+  const movementStatus=normalizeMovementStatus(document.getElementById('md_movementStatus')?.value||'قيد التنفيذ');
+  const notes=document.getElementById('md_notes')?.value.trim()||'';
+  const responsibleEmployeeId=String(currentUser.id||'');
+  const responsibleEmployeeName=String(currentUser.fullName||'');
+  if(!name){alert('يرجى إدخال اسم المتبرع.');return}
+  if(!amount||Number(String(amount).replace(/,/g,''))<=0){alert('يرجى إدخال قيمة تبرع صحيحة.');return}
+  if(!project){alert('يرجى اختيار المشروع.');return}
+  if(!intention){alert('يرجى اختيار النية.');return}
+  if(!method){alert('يرجى اختيار قناة أو طريقة التبرع.');return}
+  if(!projects.some(p=>normName(p.name)===normName(project))){alert('المشروع المختار غير مكود في النظام.');return}
+  if(!intentions.some(x=>normName(x)===normName(intention))){alert('النية المختارة غير مكودة في النظام.');return}
+  const codedChannel=channels.find(x=>normName(x)===normName(method));
+  if(!codedChannel){alert('قناة أو طريقة التبرع المختارة غير مكودة في النظام.');return}
+
+  let attachmentData='';
+  try{
+    const file=document.getElementById('md_attachment')?.files?.[0];
+    if(file)attachmentData=await compressDonationImage(file);
+  }catch(e){alert(e.message||'تعذر تجهيز الصورة المرفقة.');return}
+
+  // Merge by donor name first (as requested). If the name exists, append the transaction to the same donor.
+  let donor=donors.find(d=>normName(d.name)===normName(name));
+  if(!donor){
+    const dupByPhone=findDuplicate('',phone,null);
+    donor=dupByPhone||null;
+  }
+  if(!donor){
+    donor={id:uid(),name,phone,employeeId:responsibleEmployeeId,createdBy:currentUser.id,registeredDate:date,history:[]};
+    donors.push(donor);
+  }else{
+    if(!donor.phone&&phone)donor.phone=phone;
+  }
+
+  donor.history=donor.history||[];
+  donor.history.push({
+    type:'donation',hid:uid(),date,action:'تبرع جديد',amount,project,intention,location,method:codedChannel,notes,
+    by:responsibleEmployeeName,createdBy:responsibleEmployeeId,responsibleEmployeeId,responsibleEmployeeName,status:'confirmed',movementStatus,financeStatus:'pending',attachmentData
+  });
+  persist();
+  resetModuleDonationForm();
+  alert('تم تسجيل التبرع بنجاح، وهو الآن بانتظار اعتماد الإدارة المالية.');
+  if(donationModuleTab==='records')renderModuleDonationRecords();
+  // Keep the new-donation tab open after saving.
+}
+
+function exportModuleDonationExcel(){
+  if(!currentUser||!canModule('donationModule','view',currentUser)){alert('ليس لديك صلاحية تصدير سجلات التبرعات.');return}
+  const rows=filteredModuleDonationRows();
+  const groups=new Map();
+  rows.forEach(r=>{
+    const key=normName(r.donor);
+    if(!groups.has(key))groups.set(key,{name:r.donor,phone:r.phone,total:0,count:0,lastDate:'',lastProject:'',statuses:[]});
+    const g=groups.get(key);g.total+=(Number(String(r.amount||0).replace(/,/g,''))||0);g.count++;
+    if(!g.lastDate||String(r.date)>String(g.lastDate)){g.lastDate=r.date;g.lastProject=r.project||''}
+    g.statuses.push(normalizeFinanceStatus(r.financeStatus));
+  });
+  const out=[['اسم المتبرع','رقم التليفون','عدد التبرعات','إجمالي التبرعات','آخر تاريخ تبرع','آخر مشروع','حالة الاعتماد']];
+  [...groups.values()].sort((a,b)=>normName(a.name).localeCompare(normName(b.name),'ar')).forEach(g=>{
+    const status=g.statuses.every(s=>s==='approved')?'معتمد ماليًا':g.statuses.some(s=>s==='pending')?'يوجد تبرعات بانتظار الاعتماد':'مرفوض ماليًا';
+    const movementStatuses=g.rows.map(r=>normalizeMovementStatus(r.movementStatus)); const movementStatus=movementStatuses.every(x=>x==='ناجحة')?'ناجحة':movementStatuses.some(x=>x==='قيد التنفيذ')?'قيد التنفيذ':movementStatuses.some(x=>x==='مرفوضة')?'مرفوضة':'اخرى'; out.push([g.name,g.phone,g.count,g.total,fmtDate(g.lastDate),g.lastProject,movementStatus,status]);
+  });
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(out);
+  ws['!cols']=[{wch:24},{wch:16},{wch:14},{wch:18},{wch:16},{wch:24},{wch:18},{wch:25}];
+  XLSX.utils.book_append_sheet(wb,ws,'سجلات التبرعات');
+  XLSX.writeFile(wb,'سجلات_التبرعات.xlsx');
+}
+
+function printModuleDonationRecords(){
+  if(!currentUser||!canModule('donationModule','view',currentUser)){alert('ليس لديك صلاحية الطباعة.');return}
+  const rows=filteredModuleDonationRows();
+  const groups=new Map();
+  rows.forEach(r=>{
+    const key=normName(r.donor);
+    if(!groups.has(key))groups.set(key,{name:r.donor,phone:r.phone,total:0,count:0,rows:[]});
+    const g=groups.get(key);g.total+=(Number(String(r.amount||0).replace(/,/g,''))||0);g.count++;g.rows.push(r);
+  });
+  const html=[...groups.values()].sort((a,b)=>normName(a.name).localeCompare(normName(b.name),'ar')).map(g=>`
+    <tr><td>${escapeHtml(g.name)}</td><td>${escapeHtml(g.phone||'—')}</td><td>${g.count}</td><td>${money(g.total)}</td><td>${fmtDate(g.rows[0]?.date||'')}</td><td>${escapeHtml(g.rows[0]?.project||'—')}</td><td>${escapeHtml(movementStatusLabel(g.rows[0]?.movementStatus))}</td></tr>`).join('');
+  const w=window.open('','_blank','width=1100,height=700');
+  if(!w){alert('يرجى السماح بالنوافذ المنبثقة للطباعة.');return}
+  w.document.write(`<html dir="rtl"><head><meta charset="UTF-8"><title>سجلات التبرعات</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:24px;color:#111}h2{text-align:center;color:#005A4A}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:9px;text-align:right}th{background:#f0f5f3}@media print{button{display:none}}</style></head><body><h2>سجلات التبرعات</h2><table><thead><tr><th>اسم المتبرع</th><th>رقم التليفون</th><th>عدد التبرعات</th><th>إجمالي التبرعات</th><th>آخر تاريخ</th><th>آخر مشروع</th><th>حالة الحركة</th></tr></thead><tbody>${html}</tbody></table></body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),250);
+}
+
 function compressDonationImage(file){
   return new Promise((resolve,reject)=>{
     if(!file)return resolve('');
@@ -3896,6 +4220,7 @@ function exportExcel(){
 }
 
 document.getElementById('searchBox').addEventListener('input',e=>{searchTerm=e.target.value;render()});
+document.getElementById('moduleDonationSearch')?.addEventListener('input',e=>{moduleDonationSearchTerm=e.target.value;renderModuleDonationRecords()});
 setupViewAccordions();
 loadAll();
 </script>
