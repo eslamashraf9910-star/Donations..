@@ -1231,6 +1231,15 @@ body{overflow:hidden!important;}
       <button type="button" class="btn-outline btn-small" id="syncNowBtn" onclick="manualSync()">مزامنة الآن</button>
     </div>
   </div>
+  <div class="settings-section" id="syncTransferSection">
+    <h4>نقل البيانات بين النظام والشيت</h4>
+    <p class="small-note">استخدم هذا القسم عند ربط النظام بشيت جديد: إذا كان عندك بيانات حالية بالنظام (متبرعين وحركات) ونفس الوقت الشيت المربوط جديد أو فارغ، ارفع بيانات النظام للشيت. أما إذا كان النظام جديد والشيت المربوط عليه بيانات موجودة بالفعل، استورد بيانات الشيت للنظام.</p>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button type="button" class="btn-gold btn-small" id="syncUploadLocalBtn" onclick="uploadSystemDataToSheet()">رفع بيانات النظام الحالية إلى الشيت</button>
+      <button type="button" class="btn-outline btn-small" id="syncDownloadRemoteBtn" onclick="downloadSheetDataToSystem()">استيراد بيانات الشيت إلى النظام</button>
+    </div>
+    <p class="small-note" style="margin-top:8px;color:var(--red)">تنبيه: كل عملية من العمليتين تستبدل البيانات في أحد الطرفين (النظام أو الشيت) بالكامل ببيانات الطرف الآخر، ولا يمكن التراجع عنها.</p>
+  </div>
   <div class="settings-section" id="syncCodeSection">
     <h4>كود Google Apps Script — المدير الرئيسي فقط</h4>
     <p class="small-note">هذا الكود متاح للمدير الرئيسي فقط. يمكن نسخه أو تنزيله لإنشاء الربط مع Google Sheets.</p>
@@ -4073,6 +4082,9 @@ function renderSyncDataView(){
   document.getElementById('syncSaveUrlBtn')?.classList.toggle('hidden',!canEdit);
   document.getElementById('syncTestBtn')?.classList.toggle('hidden',!canEdit);
   document.getElementById('syncNowBtn')?.classList.toggle('hidden',!canEdit);
+  document.getElementById('syncTransferSection')?.classList.toggle('hidden',!canEdit);
+  document.getElementById('syncUploadLocalBtn')?.classList.toggle('hidden',!canEdit);
+  document.getElementById('syncDownloadRemoteBtn')?.classList.toggle('hidden',!canEdit);
   document.getElementById('syncCodeSection')?.classList.toggle('hidden',!isSuper);
   const code=document.getElementById('syncGasCodeBlock');
   if(code&&isSuper)code.textContent=GAS_CODE;
@@ -4101,6 +4113,28 @@ async function testSyncConnection(){
 }
 function copySyncGasCode(){if(!isSuperAdmin(currentUser)){alert('عرض أو نسخ كود الربط متاح للمدير الرئيسي للنظام فقط.');return}copyGasCode();}
 function downloadSyncGasCode(){if(!isSuperAdmin(currentUser)){alert('تنزيل كود الربط متاح للمدير الرئيسي للنظام فقط.');return}downloadGasCode();}
+
+/* ---------- نقل يدوي في اتجاه واحد بين النظام والشيت (عند ربط شيت جديد) ---------- */
+async function uploadSystemDataToSheet(){
+  if(!canModule('syncData','edit',currentUser)){alert('رفع بيانات النظام للشيت متاح للمدير الرئيسي فقط.');return}
+  if(!GAS_URL){alert('يرجى إدخال رابط Google Sheets وحفظه أولًا.');return}
+  if(!hasLocalData()){alert('لا توجد بيانات حالية بالنظام على هذا الجهاز لرفعها.');return}
+  if(!confirm('سيتم رفع كل بيانات النظام الحالية على هذا الجهاز (الحسابات، المتبرعين، المشاريع، القنوات، النوايا) إلى الشيت المربوط، وسيتم استبدال أي بيانات موجودة بالفعل على الشيت ببيانات النظام. هل تريد المتابعة؟'))return;
+  updateSyncViewBadge('connecting');
+  const ok=await syncPushNow();
+  updateSyncViewBadge(ok?'on':'off');
+  alert(ok?'تم رفع بيانات النظام إلى الشيت بنجاح ✓':'تعذر رفع البيانات إلى الشيت. تأكد من الاتصال والرابط ثم حاول مرة أخرى.');
+}
+async function downloadSheetDataToSystem(){
+  if(!canModule('syncData','edit',currentUser)){alert('استيراد بيانات الشيت للنظام متاح للمدير الرئيسي فقط.');return}
+  if(!GAS_URL){alert('يرجى إدخال رابط Google Sheets وحفظه أولًا.');return}
+  if(!confirm('سيتم سحب البيانات الموجودة حاليًا على الشيت المربوط، واستبدال كل بيانات النظام الحالية على هذا الجهاز بها (الحسابات، المتبرعين، المشاريع، القنوات، النوايا). هذا الإجراء يحذف أي بيانات مختلفة كانت موجودة على الجهاز ولا يمكن التراجع عنه. هل تريد المتابعة؟'))return;
+  updateSyncViewBadge('connecting');
+  const ok=await syncPull();
+  updateSyncViewBadge(ok?'on':'off');
+  alert(ok?'تم استيراد بيانات الشيت إلى النظام بنجاح ✓':'تعذر الاتصال بالشيت، أو لا توجد بيانات عليه حتى الآن.');
+  if(ok)setView('syncData');
+}
 
 /* ---------- settings view ---------- */
 function renderSettingsView(){
