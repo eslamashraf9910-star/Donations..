@@ -2015,10 +2015,20 @@ function openRegister(forceSuper){
       <button type="button" class="btn-outline btn-small" onclick="testConnection()">اختبار الاتصال</button>
       <button type="button" class="btn-outline btn-small" onclick="manualSync()">مزامنة الآن</button>
     </div>
+  </div>
+  <div class="settings-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+    <h4>كود Google Apps Script</h4>
+    <p class="small-note">انسخ هذا الكود أو نزّله، ثم الصقه داخل محرر Apps Script في Google Sheets (Extensions → Apps Script) وانشره كتطبيق ويب للحصول على رابط تطبيق الويب المطلوب أعلاه.</p>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px">
+      <button type="button" class="btn-primary btn-small" onclick="copySetupGasCode()">نسخ الكود</button>
+      <button type="button" class="btn-outline btn-small" onclick="downloadSetupGasCode()">تنزيل كملف Code.gs</button>
+    </div>
+    <pre id="setupGasCodeBlock" style="direction:ltr;text-align:left;white-space:pre-wrap;background:#F7F5EF;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12px;max-height:420px;overflow:auto"></pre>
   </div>`:''}`)
   if(locked){
     const gu=document.getElementById('gasUrlInput'); if(gu)gu.value=GAS_URL||'';
     setConnStatus(GAS_URL?(lastSyncAt?'on':'connecting'):'off');
+    const sc=document.getElementById('setupGasCodeBlock'); if(sc)sc.textContent=GAS_CODE;
   } else toggleRegisterCategoryField();
 }
 function toggleRegisterCategoryField(){
@@ -3329,6 +3339,19 @@ function copyGasCode(){
 }
 function downloadGasCode(){
   if(!isSuperAdmin(currentUser)){alert('تنزيل كود الربط متاح للمدير الرئيسي للنظام فقط.');return}
+  const blob=new Blob([GAS_CODE],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='Code.gs';document.body.appendChild(a);a.click();a.remove();
+}
+/* copy/download from the first-time setup screen: access here is already gated by the secret SETUP_CODE, not by login */
+function copySetupGasCode(){
+  navigator.clipboard.writeText(GAS_CODE).then(()=>alert('تم نسخ كود Google Apps Script بالكامل.')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=GAS_CODE;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');alert('تم نسخ الكود.')}catch(e){alert('تعذر النسخ تلقائيًا. الصق الكود يدويًا من المربع الظاهر أعلاه.')}
+    ta.remove();
+  });
+}
+function downloadSetupGasCode(){
   const blob=new Blob([GAS_CODE],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='Code.gs';document.body.appendChild(a);a.click();a.remove();
